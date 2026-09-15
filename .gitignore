@@ -1,0 +1,23 @@
+# JetBrains
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+*.swp
+*.swo
+
+# Test
+test_ignore/
+*.pyc
+
+# .vscode folders
+.vscode/

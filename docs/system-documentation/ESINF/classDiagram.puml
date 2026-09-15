@@ -1,0 +1,272 @@
+@startuml
+
+class  ItemRepository {
+    - availableItems : array of Items
+
+    + size() : int
+    + removeItem() : void
+    + addItem(item : Item) : void
+}
+
+class Item {
+    - sku : String
+    - itemType : ItemType
+    - unit : Unit
+    - volume : double
+    - unitWeight : double
+    - expiryDate
+
+    + getUnit() : Unit
+    + getSku() : String
+    + getVolume() : double
+    + getUnitWeight() : double
+    + getItemType() : ItemType
+}
+
+ItemRepository --> Item : stores
+
+enum Unit {
+    PACK
+    BOTTLE
+    BAG
+    UNIT
+}
+
+Item --> ItemType : has a
+Item --> Unit : has a
+
+class Quarantine {
+    - returnedItems : ArrayDeque<QuarantineItem> /' <id, QuarantineItem> '/
+
+    + restock() : ArrayList<Item>
+    + writeLogLine() : void
+    + removeItem() : void
+    + addItem(item : QuarantineItem) : void
+}
+
+class QuarantineItem {
+    - item : Item
+    - qty : int
+    - reason : Reason
+    - timestamp : timestamp
+    - expireDate : date
+}
+
+Quarantine --> QuarantineItem
+QuarantineItem -> Item
+QuarantineItem *-- Reason
+
+enum Reason{
+    PACKAGE_OPEN
+    COSTUMER_REMORSE
+    EXPIRED
+    DAMAGED
+    WRONG_ITEM
+}
+
+
+class Terminal{
+    - warehouses : LinkedList < Warehouse >
+    - orders : PriorityQueue<Order>
+    - ordersEligibilities : List<List<OrderLineEligibility>>
+    - processMode(warehouse : Warehouse, item : Item, remainingQty : int, orderLineEligibility: OrderLineEligibility) : int
+    - processOrderLine(order : Order , entry : Map.Entry<Item, Integer>, index : int, orderMode : OrderMode ) : OrderLineEligibility
+
+    + listOrders() : String
+    + orderEligibility(order : Order, orderMode : OrderMode ) : boolean
+    + hasWarehouse(warehouseId : String) : boolean
+    + hasOrder(orderId : String) : boolean
+    + getOrderToFulfill() : Order
+    + getOrder(orderIndex : int) : Order
+    + getOrders() : PriorityQueue<Order>
+    + getWarehouse() : List<Warehosue>
+    + addWarehouse(warehouse: Warehouse) : void
+    + addToOrder(orderId : String, item : Item , qnt : int) : void
+
+}
+
+class Warehouse{
+    - quarentine : Quarentine
+    - aisle : List < Aisle >
+    - id : int
+    +  getQuarantine() : Quarantine
+    +  getId() : String
+    +  getAisles() : List<Aisle>
+    +  getAisle(index : int) : Aisle
+    +  getManyAisle() : int
+    +  hasAisle(index : int) : boolean
+    +  setQuarantine(quarantine : Quarantine) : void
+    +  addAisle(aisle : Aisle) : void
+}
+
+Terminal "1" *-- "many" Warehouse
+
+Warehouse "1" *-- "1" Quarantine : has a
+
+class Aisle{
+    - bay : List < Bay >
+
+    + hasBay(bay : int) : boolean
+    + addBay(bay : Bay) : void
+    + getBay(pos : int) : Bay
+    + isThereSpaceForItem(item : Item) : boolean
+    + iterateBays(item : Item, qty : Integer, orderLineEligibility :  OrderLineEligibility ,  warehouseId : String, aisleId : String, indexBay : int )
+}
+
+class Bay {
+    - boxes : PriorityQueue < Box > /' FEFO and FIFO data type '/
+    - MAX_BOXES : int
+
+    + addBox() :void
+    + getBox() : Box
+    + getMAX_BOXES() : int
+    + boxRealocation() : void
+    + iterateBoxes(item : Item, qty : Integer, orderLineEligibility:  OrderLineEligibility, warehouseId : String, aisleId : String , bayId : String ) : int
+}
+
+
+class Box {
+	- boxID : String
+	- product : Item
+	- qntY : int /' don't know if it is going to stay! '/
+	- expireDate : LocalDate
+	- receivedAt : LocalDateTime
+
+	+ changeReceiveAt(time : timestamp)
+	+ getBoxID() : String
+    + getQntY() : int
+    + takeQntY(many : int): int
+    + getProduct(): Item
+}
+
+enum ItemType{
+    CLEANING
+    ELECTRONICS
+    HARDWARE
+    BEVERAGE
+    PERSONAL_CARE
+    GROCERY
+}
+
+/' --------- New added classes ---------  '/
+
+class Trolley{
+    - capacity : double
+
+    + isFull() : bool
+    + manyCapacityFor(weight : double) : double
+}
+
+class WagonRepository{
+    - wagons : List < Wagon >
+
+    + size() : int
+    + removeWagon() : void
+    + addWagon(wagon : Wagon) : void
+}
+
+class Wagon{
+    - wagonId : String
+    - boxes : PriorityQueue < Box >    /'- boxId : int'/
+    - qty : int
+
+    + addBox(box : Box) : void
+    + unload() : Stack<Box>
+    + toString() : String
+}
+
+WagonRepository "1" --> "many" Wagon : holds
+
+class Order {
+    - items : Map <Item, int>
+    -  id : String
+    -  priority : int
+    -  date : LocalDateTime
+
+    - getItems() : Map<Item, Integer>
+    - addItem(Item item, int qnt) : void
+    - isEmpty() : boolean
+    - getItemQnt(item : Item) : int
+    - getId() : String
+    - getDate() : LocalDateTime
+}
+
+class Allocation {
+    - warehouseId : String
+    - picked : boolean
+    - orderId : String
+    - aisleId : String
+    - bayId : String
+    - boxId : String
+    - sku : String
+    - lineNo : int
+    - qty : int
+
+    + isPicked(picked : boolean) : void
+    + getPicked() : boolean
+}
+
+class Position{
+    - bayIndex : int
+    - aisleIndex : int
+
+    + getBayIndex() : int
+    + getAisleIndex() : int
+}
+
+class OrderLineEligibility {
+    - allocations : ArrayList<Allocation>
+    - requestedQty : double
+    - allocatedQty : Integer
+    - status : OrderStatus
+    - orderId : String
+    - lineNo : int
+    - sku : String
+
+     + getLineNo(): int
+     + getOrderId(): String
+     + getStatus(): OrderStatus
+     + addAllocatedQty(qnt : int) : void
+     + setStatus(status : OrderStatus) : void
+     + getAllocations : ArrayList<Allocation>
+     + addAllocation (warehouseId : String, aisleId : String, bayId : String, boxId : String, qty: int, lineNo : int) : void
+}
+
+enum OrderMode{
+    SRTICT
+    PARTIAL
+}
+
+enum OrderStatus{
+    ELIGIBLE
+    PARTIAL
+    UNDISPATCHABLE
+}
+
+class TerminalRepository {
+    - instance : TerminalRepository
+    - terminals : ArrayList<Terminal>
+
+    + size() : int
+    + listTerminals() : String[]
+    + add(terminal : Terminal) : void
+    + remove(terminal : Terminal) : void
+    + getTerminal(index : int) : Terminal
+}
+
+Terminal "1" --> "many" Order : holds
+Wagon --> Terminal : gets to
+Warehouse "1" *-- "many" Aisle : contains
+Aisle "1" *-- "many" Bay : contains
+Box "1" *-- "many" Item : contains
+Bay "1" --> "many" Box : stores
+Warehouse --> Order : handles
+
+Warehouse "1" --> "many" Trolley : has
+OrderLineEligibility "1" *-- "1" OrderStatus
+OrderLineEligibility "1" o-- "many" Allocation : has
+Terminal .-> OrderMode : Uses
+Terminal --> OrderLineEligibility : Stores
+TerminalRepository "1" --> "many" Terminal : Stores
+
+@enduml

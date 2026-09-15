@@ -1,0 +1,81 @@
+@startuml
+
+actor User
+
+activate User
+User -> WagonUnloadUI : Select the OrderAllocation function
+activate WagonUnloadUI
+WagonUnloadUI -> WagonUnloadController : listAvailableTerminals()
+    activate WagonUnloadController
+    WagonUnloadController --> TerminalRepository : listAvailableTerminals()
+        activate TerminalRepository
+        TerminalRepository --> WagonUnloadController : availableTerminals
+        deactivate TerminalRepository
+    WagonUnloadController --> WagonUnloadUI : availableTerminals
+    deactivate WagonUnloadController
+WagonUnloadUI --> User : Display the available terminal and ask the \n user to choose one
+deactivate WagonUnloadUI
+
+User -> WagonUnloadUI : Selected terminal
+activate WagonUnloadUI
+WagonUnloadUI -> WagonUnloadController : listWagons(terminalIndex)
+    activate WagonUnloadController
+    WagonUnloadController --> TerminalRepository : getTerminal(index)
+        activate TerminalRepository
+        TerminalRepository --> WagonUnloadController : terminal
+        deactivate TerminalRepository
+    WagonUnloadController --> Terminal : listWagons()
+        activate Terminal
+        Terminal --> WagonUnloadController : wagons
+        deactivate Terminal
+    WagonUnloadController --> WagonUnloadUI : wagons
+    deactivate WagonUnloadController
+WagonUnloadUI --> User : Display the orders and ask the user to choose one
+deactivate WagonUnloadUI
+
+User -> WagonUnloadUI : Selected terminal
+activate WagonUnloadUI
+WagonUnloadUI -> WagonUnloadController : unloadWagon(wagonIndex)
+    activate WagonUnloadController
+        WagonUnloadController --> Terminal : getWagon(index)
+            activate Terminal
+            Terminal --> WagonUnloadController : wagon
+            deactivate Terminal
+
+            WagonUnloadController --> Terminal : unloadWagon(wagon)
+            activate Terminal
+
+            loop itemInWagon
+                Terminal -> Wagon : getNextItem()
+                activate Wagon
+                Wagon -> Terminal : item
+                deactivate Wagon
+
+                    loop manyWarehosue
+                    Terminal -> Warehouse : hasSpace()
+                    activate Warehouse
+                    Warehouse --> Terminal : hasSpace
+                    deactivate Warehouse
+                    alt hasSpace
+                        Terminal -> Warehouse : storeItem(item)
+                        activate Warehouse
+                        Warehouse --> Terminal : storedStatus
+                        note right
+                            there is still a lot in the back just
+                            not specified in here, the warehouse
+                            will pass through each aisle and bay
+                            and the bay is going to store the item
+                            in a box inside it
+                        endnote
+                        deactivate Warehouse
+                    end
+                end
+            end
+            WagonUnloadController --> Terminal : unloaded status
+            deactivate Terminal
+    WagonUnloadController --> WagonUnloadUI : unloaded status
+    deactivate WagonUnloadController
+WagonUnloadUI --> User : Wagon unloaded success message
+deactivate WagonUnloadUI
+
+@enduml

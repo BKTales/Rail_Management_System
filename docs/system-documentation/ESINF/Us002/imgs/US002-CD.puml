@@ -1,0 +1,156 @@
+@startuml
+title US002-CD
+
+class Item {
+    - sku : String
+    - itemType : ItemType
+    - unit : Unit
+    - volume : double
+    - unitWeight : double
+    - expiryDate
+}
+
+enum ItemType{
+    CLEANING
+    ELECTRONICS
+    HARDWARE
+    BEVERAGE
+    PERSONAL_CARE
+    GROCERY
+}
+
+
+enum Unit {
+    PACK
+    BOTTLE
+    BAG
+    UNIT
+}
+
+Item --> ItemType : has a
+Item --> Unit : has a
+
+
+
+class Box {
+	- boxID : int
+	- product : Item
+	- qntY : int /' don't know if it is going to stay! '/
+	- expireDate : date
+	- receivedAt : timestamp
+
+	+ changeReceiveAt(time : timestamp)
+}
+
+
+/' --------- New added classes ---------  '/
+
+enum OrderMode{
+STRICT
+PARTIAL
+}
+
+class Order {
+    - orderLines : ArrayList<OrderLine>
+    - priority : int
+    - dueDate : LocalDateTime
+    - id : String
+    - status : OrderStatus
+
+    + Order(id : String, dueDate : LocalDateTime, priority : int)
+    + addItem(item : Item, qnt : int) : void
+    + isEmpty() : boolean
+    + getItems() : ArrayList<OrderLine>
+    + getStatus() : OrderStatus
+    - calculateStatus() : OrderStatus
+    + getItemQnt(item : Item) : int
+    + getId() : String
+    + getDueDate() : LocalDateTime
+    + compareTo(o : Order) : int
+    + toString() : String
+}
+
+class OrderAllocationUI{
+    - controller : OrderAllocationController
+    - orderAllocationType : boolean
+    - terminalIndex : int
+
+    + listAvailableTerminals() : void
+    + orderEligibility() : void
+    + getOrder() : void
+    + run() : void
+}
+
+class OrderAllocationController{
+    - terminalRepo : TerminalRepository
+    - terminal : Terminal
+    - order : Order
+
+    + getOrder(int terminalIndex) : void
+    + orderEligibility(boolean eligible) : String
+    + String[] listAvailableTerminals() : String[]
+}
+
+
+
+class OrderAllocation {
+    + orderAllocation(t : Terminal, order : Order, orderMode : OrderMode) : String
+    - processOrderLine(t : Terminal, orderLine : OrderLine, orderMode : OrderMode) : void
+    - settingStatus(t : Terminal, orderLine : OrderLine, orderMode : OrderMode, remainingQty : int) : void
+    - returnStatus(orderStatus : OrderStatus) : String
+    ~ searchBoxesDirect(t : Terminal, item : Item, qty : int, orderLine : OrderLine) : int
+    - allocateFromBoxes(boxes : PriorityQueue<Box>, qty : int, orderLine : OrderLine) : int
+}
+
+OrderAllocation ..> Terminal
+OrderAllocation ..> Order
+Order -* OrderLine
+OrderAllocation ..> OrderMode
+
+OrderAllocationController ..> OrderMode : set
+
+OrderAllocationUI .-> OrderAllocationController : uses
+OrderAllocationController .-> Terminal : get
+OrderAllocationController .-> OrderAllocation : uses
+
+class OrderLine {
+    - allocations : ArrayList<Allocation>
+    - allocatedQty : int
+    - requestedQty : int
+    - item : Item
+    - status : OrderStatus
+
+    + OrderLine(item : Item, requestedQty : int)
+    + getAllocations() : ArrayList<Allocation>
+    + getAllocatedQty() : int
+    + addRequestedQty(qnt : int) : void
+    + getItem() : Item
+    + getNecessaryQty() : int
+    + getRequestedQty() : int
+    + addAllocation(warehouseId : String, p : Position, boxId : String, qty : int) : void
+    + addAllocatedQty(qty : int) : void
+    + setStatus(status : OrderStatus) : void
+    + getStatus() : OrderStatus
+    + toString() : String
+}
+
+
+Box "1" *-- "many" Item : contains
+Terminal "1" --> "many" Box : stores
+Terminal --> Order : holds
+
+
+
+class Terminal {
+    - orders : PriorityQueue<Order>
+    - itemHash : HashMap<String, PriorityQueue<Box>>
+
+    + getOrders() : PriorityQueue<Order>
+    + getOrder(orderIndex : int) : Order
+    + getOrderToFulfill() : Order
+    + getOrderToPlan() : Order
+    + getFromItemHash() : HashMap<String, PriorityQueue<Box>>
+    + getItemHash() : HashMap<String, PriorityQueue<Box>
+}
+
+@enduml

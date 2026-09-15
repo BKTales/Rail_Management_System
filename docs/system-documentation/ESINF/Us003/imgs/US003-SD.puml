@@ -1,0 +1,109 @@
+@startuml
+title USEI003 - Order Plan Pick
+
+actor MPlanner
+
+activate MPlanner
+MPlanner -> OrderPlanPickUI : createPlan()
+activate OrderPlanPickUI
+
+OrderPlanPickUI -> OrderPlanPickController : listAvailableTerminals()
+activate OrderPlanPickController
+OrderPlanPickController -> TerminalRepository : listTerminals()
+activate TerminalRepository
+TerminalRepository --> OrderPlanPickController : String[] terminals
+deactivate TerminalRepository
+OrderPlanPickController --> OrderPlanPickUI : String[] terminals
+deactivate OrderPlanPickController
+
+OrderPlanPickUI -> MPlanner : display available terminals
+MPlanner -> OrderPlanPickUI : select terminalIndex
+
+OrderPlanPickUI -> OrderPlanPickController : getOrder(terminalIndex)
+activate OrderPlanPickController
+OrderPlanPickController -> TerminalRepository : getTerminal(terminalIndex)
+activate TerminalRepository
+TerminalRepository --> OrderPlanPickController : Terminal
+deactivate TerminalRepository
+
+OrderPlanPickController -> Terminal : getOrderToPlan()
+activate Terminal
+Terminal --> OrderPlanPickController : Order order
+deactivate Terminal
+OrderPlanPickController --> OrderPlanPickUI : Order order
+deactivate OrderPlanPickController
+
+OrderPlanPickUI -> MPlanner : request trolley capacity
+MPlanner -> OrderPlanPickUI : input capacity
+
+OrderPlanPickUI -> OrderPlanPickController : listPickModes()
+activate OrderPlanPickController
+OrderPlanPickController -> Terminal : listPickModes()
+activate Terminal
+Terminal --> OrderPlanPickController : String[] pickModes
+deactivate Terminal
+OrderPlanPickController --> OrderPlanPickUI : String[] pickModes
+deactivate OrderPlanPickController
+
+OrderPlanPickUI -> MPlanner : display pick modes
+MPlanner -> OrderPlanPickUI : select orderMode
+
+OrderPlanPickUI -> OrderPlanPickController : createPlan(orderMode, capacity)
+activate OrderPlanPickController
+OrderPlanPickController -> Terminal : getPlan(order, orderMode, capacity)
+activate Terminal
+
+alt First Fit
+    Terminal -> Terminal : firstFit(order, capacity)
+else First Fit Decreasing
+    Terminal -> Terminal : firstFitDecreasing(order, capacity)
+else Best Fit Decreasing
+    Terminal -> Terminal : bestFitDecreasing(order, capacity)
+end
+
+Terminal -> Plan : create Plan(Heuristic)
+activate Plan
+Plan --> Terminal : Plan created
+
+Terminal -> Order : getItems()
+    activate Order
+    Order --> Terminal : List<OrderLine>
+    deactivate Order
+
+Terminal -> Trolley : create Trolley(capacity)
+activate Trolley
+Trolley --> Terminal : Trolley ready
+
+
+loop For each OrderLine
+    Terminal -> OrderLine : getAllocations()
+    activate OrderLine
+    OrderLine --> Terminal : List<Allocation>
+    deactivate OrderLine
+
+
+    loop For each Allocation
+        Terminal -> Trolley : addAllocation(a)
+        Trolley --> Terminal : Allocation added
+        deactivate Trolley
+    end
+
+end
+
+Terminal -> Plan : addTrolley(Trolley)
+Plan --> Terminal : Trolley added
+
+deactivate Plan
+
+Terminal --> OrderPlanPickController : Plan
+OrderPlanPickController -> Terminal : removeOrder()
+Terminal --> OrderPlanPickController : Order removed
+deactivate Terminal
+OrderPlanPickController --> OrderPlanPickUI : String plan.toString()
+
+deactivate OrderPlanPickController
+
+OrderPlanPickUI -> MPlanner : display Plan summary
+deactivate OrderPlanPickUI
+deactivate MPlanner
+@enduml

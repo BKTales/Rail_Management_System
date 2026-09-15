@@ -1,0 +1,26 @@
+@startuml
+actor TerminalOperator
+
+activate TerminalOperator
+
+loop until input == "exit"
+
+TerminalOperator -> System : Login
+    activate System
+    alt
+
+        System -> System : Option1 - List Wagon to unload
+        System -> System : Option2 - Unload Wagon to Warehouse
+
+    end
+
+    System -> TerminalOperator : Display menu of options
+    deactivate System
+TerminalOperator -> System : Select one option
+    activate System
+    System -> System : Execute wanted action
+    System -> TerminalOperator : Return/Display result
+    deactivate System
+
+end
+@enduml

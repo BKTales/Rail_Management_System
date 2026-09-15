@@ -1,0 +1,24 @@
+@startuml
+actor StorageManager
+
+activate StorageManager
+
+loop until input == "exit"
+StorageManager -> System : Login
+    activate System
+    alt
+
+        System -> System : Option1 - access the Cargo Handling functionality ?????
+
+    end
+
+    System -> StorageManager : Display menu of options
+    deactivate System
+StorageManager -> System : Select one option
+    activate System
+    System -> System : Execute wanted action
+    System -> StorageManager : Return/Display result
+    deactivate System
+
+end
+@enduml

@@ -1,0 +1,46 @@
+@startuml
+
+actor User
+
+
+activate User
+User -> OrderAllocationUI : Select the OrderAllocation function
+activate OrderAllocationUI
+
+OrderAllocationUI --> User : Ask for the type of allocation(strict or partial)
+deactivate OrderAllocationUI
+
+
+User -> OrderAllocationUI : Chosen allocation type
+activate OrderAllocationUI
+OrderAllocationUI -> OrderAllocationController : orderElegibility()
+    activate OrderAllocationController
+        OrderAllocationController --> TerminalRepository :getTerminal()
+        activate TerminalRepository
+            TerminalRepository --> OrderAllocationController :Terminal
+        Deactivate TerminalRepository
+
+        loop Orders
+            OrderAllocationController --> OrderAllocation : orderAllocation(Terminal t, Order order, OrderMode orderMode)
+
+            activate OrderAllocation
+
+            loop OrderLines
+                OrderAllocation --> OrderAllocation : processOrderLine(Terminal t, OrderLine orderLine, OrderMode orderMode)
+
+
+                OrderAllocation -> Terminal : getItemHash(String sku)
+                activate Terminal
+                Terminal --> OrderAllocation : itemPriorityQueue
+                deactivate Terminal
+            end
+            OrderAllocation --> OrderAllocationController : result
+
+            deactivate OrderAllocation
+        end
+
+    OrderAllocationController --> OrderAllocationUI : result
+    deactivate OrderAllocationController
+OrderAllocationUI --> User : display the result and confirmation
+deactivate OrderAllocationUI
+@enduml

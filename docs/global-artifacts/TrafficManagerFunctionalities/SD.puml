@@ -1,0 +1,26 @@
+@startuml
+actor TrafficManager
+
+activate TrafficManager
+
+loop until input == "exit"
+
+TrafficManager -> System : Login
+    activate System
+    alt
+    System -> System : Option1 - Assemble/Assign a train
+    System -> System : Option2 - List trains in a FreightYard/Program
+    System -> System : Option3 - Dispatch a train ??
+    end
+
+    System -> TrafficManager : Display menu of options
+    deactivate System
+TrafficManager -> System : Select one option
+    activate System
+    System -> System : Execute wanted action
+    System -> TrafficManager : Return/Display result
+    deactivate System
+
+end
+
+@enduml

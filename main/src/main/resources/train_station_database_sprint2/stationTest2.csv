@@ -1,0 +1,5 @@
+country,time_zone,time_zone_group,station,latitude,longitude,is_city,is_main_station,is_airport
+IT,"('Europe/Rome',)",CET,Station 1,44,10,False,False,False
+IT,"('Europe/Rome',)",CET,Station 2,43,20,False,False,False
+IT,"('Europe/Rome',)",CET,Station 3,45,20,False,False,False
+IT,"('Europe/Rome',)",CET,Station 4,46,10,False,False,False

@@ -1,0 +1,13 @@
+country,time_zone,time_zone_group,station,latitude,longitude,is_city,is_main_station,is_airport
+FR,"('Europe/Paris',)",CET,Ebersviller,49.2747715,6.4111622,False,False,False
+FR,"('Europe/Paris',)",CET,Gertwiller,48.4133621,7.4663166,False,False,False
+ES,"('Europe/Madrid',)",CET,Oropesa de Toledo,39.915853,-5.172734,False,False,False
+ES,"('Europe/Madrid',)",CET,Benarraba,36.550621,-5.27595359999998,True,False,False
+CH,"('Europe/Zurich',)",CET,Lausanne Beaulieu-Jomini,46.527276,6.626389,False,False,False
+CH,"('Europe/Zurich',)",CET,Luzern Hotel Seeburg,47.047158,8.343311,False,False,False
+SE,"('Europe/Stockholm',)",CET,Bergagard Ljungby skola,56.98111,12.57833,False,False,False
+SE,"('Europe/Stockholm',)",CET,Branno Husvik,57.63528,11.76667,False,False,False
+NL,"('Europe/Amsterdam',)",CET,Aalsmeer,52.25867138,4.784989748,True,False,False
+CZ,"('Europe/Prague',)",CET,Velesin,48.820001,14.436819,True,False,False
+HU,"('Europe/Budapest',)",CET,Tata,47.66362,18.328205,True,False,False
+SK,"('Europe/Bratislava',)",CET,Rusovce,48.04648,17.150798,False,False,False

@@ -1,0 +1,20 @@
+--USEDDDDDDDDDDDDDDDDDDDDDD
+CREATE OR REPLACE FUNCTION getFacilityByWagon(p_wagonId IN NUMBER)
+RETURN NUMBER
+IS
+    v_facilityId NUMBER;
+BEGIN
+SELECT facilityId
+INTO v_facilityId
+FROM Wagon
+WHERE wagonId = p_wagonId;
+
+RETURN v_facilityId;
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RETURN NULL;
+WHEN OTHERS THEN
+        RAISE;
+END;
+/

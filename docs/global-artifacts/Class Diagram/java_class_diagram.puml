@@ -1,0 +1,585 @@
+@startuml
+
+' ==================== Facilities Package ====================
+package Facilities_P {
+    abstract class Facility {
+        - connections: HashMap<Facility, RailLine>
+        - trainInFacilityByTime: TreeMap<LocalDateTime, List<Train>>
+        # location: GeographicalLocation
+        # timeZoneGroup: TimeZoneGroup
+        # timeZone: TimeZone
+        # country: Country
+        # name: String
+        # id: int
+        # pathId: int
+        # routeId: int
+        
+        + createConnection(Facility, RailLine): void
+        + addTrainInFacility(Train, LocalDateTime): void
+        + addConnectedFacility(RailLine): void
+        + createManualRoute(List<Facility>, Facility, Facility, LocalDateTime): void
+        + createPath(List<Facility>, Facility, Facility): Path
+    }
+
+    package FrightYard_P {
+        class FreightYard {
+            - wagons: List<Wagon>
+            - freights: List<Freight>
+            
+            + addWagon(Wagon): void
+            + addFreight(Freight): void
+            + getOrCreateWagon(String): Wagon
+            + removeWagonByIndex(int): Wagon
+            + removeWagon(Freight): void
+            + removeFreightByIndex(int): Freight
+            + removeFreight(Freight): void
+            + size(): int
+            + listWagons(): String[]
+            + listPrintWagon(): String
+        }
+    }
+
+    package Facilities.Station_P {
+        class Station {
+            - name: String
+            - isCity: boolean
+            - isAirport: boolean
+            - isMainStation: boolean
+            
+            + isAirport(): boolean
+            + isMainStation(): boolean
+            + isCity(): boolean
+            {static} + getComparatorByCity(): Comparator<Station>
+        }
+    }
+
+    package Terminal_P {
+        class Terminal {
+            - orders: PriorityQueue<Order>
+            - warehouses: List<Warehouse>
+            - pickupPlans: List<PickupPlan>
+            - itemHash: HashMap<String, PriorityQueue<Box>>
+            
+            + addOrder(Order): void
+            + removeOrder(): void
+            + addWarehouse(Warehouse): void
+            + addToOrder(String, Item, int): void
+            + addBayToWarehouse(String, int, int, int): void
+            + restockWarehouse(): String
+            + hasOrder(String): boolean
+            + getWarehouse(String): Warehouse
+            + listPlans(): String[]
+            + getPlanByIndex(int): PickupPlan
+            + unloadWagon(Wagon): boolean
+            + getOrderToFulfill(): Order
+            + getOrderToPlan(): Order
+            + getWarehouseIndexOf(String): int
+            + printItemInHash(): void
+            + getPlan(Order, int, double): PickupPlan
+            + firstFit(Order, double): PickupPlan
+            + firstFitDecreasing(Order, double): PickupPlan
+            + bestFitDecreasing(Order, double): PickupPlan
+            + firstAvailableWarehouse(): Warehouse
+            + showOrders(): String
+            + listOrders(): String
+            {static} + listPickModes(): String
+        }
+
+        package Warehouse_P {
+            class Warehouse {
+                - id: String
+                - quarantine: Quarantine
+                - aisles: List<Aisle>
+                
+                + addAisle(Aisle): void
+                + storeBox(Box, WarehousePosition): boolean
+                + hasAisle(int): boolean
+                + availableSpace(): int
+            }
+
+            class Aisle {
+                - bays: List<Bay>
+                
+                + hasBay(int): boolean
+                + addBay(Bay): void
+                + getBay(int): Bay
+                + getManyBays(): int
+                + isThereSpaceForItem(Item): int
+                + receiveBox(Box, WarehousePosition): boolean
+            }
+
+            class Bay {
+                - MAX_BOXES: int
+                - boxes: LinkedList<Box>
+                
+                + addBox(Box): void
+                + getFirstBox(): Box
+                + getBox(int): Box
+                + getFirstBoxWithItem(Item): Box
+                + getManyBoxes(): int
+                + availableBoxes(): int
+                + isFull(): boolean
+                + isEmpty(): boolean
+                + receiveBox(Box, WarehousePosition): boolean
+            }
+
+            class Allocation {
+                - warehouseId: String
+                - warehousePosition: WarehousePosition
+                - boxId: String
+                - qty: int
+                - sku: String
+                
+                + getWeighted(): double
+                + getWeight(): Item
+            }
+
+            class WarehousePosition {
+                - bayIndex: int
+                - aisleIndex: int
+                - warehouseIndex: int
+            }
+
+            class PickingPath {
+                - paths: List<WarehousePosition>
+                - distance: int
+                - warehouseId: String
+            }
+
+            class PickupPlan {
+                - {static} count: int
+                - planID: String
+                - totalWeight: double
+                - trolleyList: List<Trolley>
+                - heuristic: Heuristic
+                - lineNumber: int
+                
+                + addTrolley(Trolley): void
+                + getLastTrolley(): Trolley
+                + getWeight(): double
+            }
+
+            class Trolley {
+                - capacity: double
+                - currentWeight: double
+                - percentageOfUse: double
+                - allocations: List<Allocation>
+                
+                + isFull(): boolean
+                + addAllocation(Allocation): boolean
+                + addWeight(double): void
+            }
+
+            class Quarantine {
+                - MAX_ITEMS: int
+                - returnedItems: PriorityQueue<QuarantineItem>
+                
+                + addItem(QuarantineItem): void
+                + poll(): QuarantineItem
+                + getCurrentItems(): int
+            }
+
+            enum Heuristic {
+                FF
+                FFD
+                BFD
+            }
+        }
+    }
+}
+
+' ==================== Item Package ====================
+package Item_P {
+    class Box {
+        - qntY: int
+        - boxID: String
+        - product: Item
+        - expireDate: LocalDate
+        - receivedAt: LocalDateTime
+        - pos: WarehousePosition
+        
+        + takeQntY(int): int
+        + getWeight(): double
+        + takeQuantity(int): int
+        + compareTo(Box): int
+    }
+
+    class Item {
+        - sku: String
+        - unit: Unit
+        - volume: double
+        - itemType: ItemType
+        - unitWeight: double
+    }
+
+    class QuarantineItem {
+        - id: String
+        - qty: int
+        - item: Item
+        - reason: Reason
+        - expireDate: LocalDate
+        - timestamp: Timestamp
+    }
+
+    enum ItemType {
+        CLEANING
+        ELECTRONICS
+        HARDWARE
+        BEVERAGE
+        PERSONAL_CARE
+        GROCERY
+        
+        {static} + fromString(String): ItemType
+    }
+
+    enum Unit {
+        PACK
+        BOTTLE
+        BAG
+        UNIT
+        BOX
+        
+        {static} + fromString(String): Unit
+    }
+
+    enum Reason {
+        CYCLE_COUNT
+        CUSTOMER_REMORSE
+        EXPIRED
+        DAMAGED
+        WRONG_ITEM
+        
+        {static} + fromString(String): Reason
+    }
+}
+
+' ==================== Location Package ====================
+package Location_P {
+    class GeographicalLocation {
+        - latitude: double
+        - longitude: double
+    }
+
+    class Country {
+        - abbreviaton: String
+
+        + compareTo(Country): int
+    }
+
+    class TimeZone {
+        - continent: String
+        - city: String
+
+        + getZoneId(): String
+    }
+
+    enum TimeZoneGroup {
+        WETGMT
+        CET
+        EET
+        FET
+
+        {static} + fromString(String): TimeZoneGroup
+    }
+
+    class Arrival {
+        - arrival: HashMap<Facility, LocalDateTime>
+        - estimatedArrival: HashMap<Facility, LocalDateTime>
+        - train: Train
+
+        + trainArrived(Facility, LocalDateTime): void
+        + calculateEstimatedArrival(Train, Path, LocalDateTime): void
+    }
+}
+
+' ==================== Order Package ====================
+package Order_P {
+    class Order {
+        - orderLines: ArrayList<OrderLine>
+        - priority: int
+        - dueDate: LocalDateTime
+        - id: String
+        - status: OrderStatus
+        
+        + addItem(Item, int): void
+        + isEmpty(): boolean
+        + getItemQnt(Item): int
+        + compareTo(Order): int
+    }
+
+    class OrderLine {
+        - allocations: ArrayList<Allocation>
+        - allocatedQty: int
+        - requestedQty: int
+        - item: Item
+        - status: OrderStatus
+        
+        + addRequestedQty(int): void
+        + getNecessaryQty(): int
+        + addAllocation(String, WarehousePosition, String, int): void
+        + addAllocatedQty(int): void
+    }
+
+    enum OrderMode {
+        STRICT
+        PARTIAL
+    }
+
+    enum OrderStatus {
+        ELIGIBLE
+        PARTIAL
+        UNDISPATCHABLE
+    }
+}
+
+' ==================== RailLineNetwork Package ====================
+package RailLineNetwork_P {
+    class Path {
+        - railFacilities: List<Facility>
+        - startFacility: Facility
+        - endFacility: Facility
+        - pathId: String
+    }
+
+    class RailLine {
+        - startFacility: Facility
+        - endFacility: Facility
+        - railSegments: List<RailSegment>
+        - totalDistance: double
+        - routeId: String
+        
+        - calculateTotalDistance(): double
+        + getMediumCapacity(): int
+    }
+
+    class RailSegment {
+        - hasSiding: boolean
+        - segmentId: String
+        - distanceKm: double
+        - maxSpeedKmh: int
+        - manyTracks: int
+        - isElectrified: boolean
+        - maxWeightPerMeter: double
+        - sidingSize: int
+        - sidingPosition: int
+        - arrivalsAtSegment: TreeMap<TimeInSegment, List<Train>>
+        - listOfTrains: ArrayList<Train>
+        
+        + canHandleWeight(double, double): boolean
+        + calculateSpeed(Train): double
+        + setArrivalsAtSegment(LocalDateTime, Train): TimeInSegment
+        + setArrivalAtSegmentHelper(TimeInSegment, List<Train>): void
+    }
+
+    class Route {
+        - path: Path
+        - routeId: String
+        - isComplex: boolean
+        - departureDay: LocalDateTime
+        - arrivalDay: LocalDateTime
+        - freights: List<Freight>
+        
+        + addFreight(Freight): void
+    }
+
+    class TimeInSegment {
+        - startTime: LocalDateTime
+        - endTime: LocalDateTime
+        
+        + compareTo(TimeInSegment): int
+        + inBetween(LocalDateTime): boolean
+        + hasIntersection(TimeInSegment): TimeInSegment
+        + separateCollisionTime(TimeInSegment, TimeInSegment): CollisionTimes
+        + timeBeforeOrSame(LocalDateTime, LocalDateTime): LocalDateTime
+    }
+
+    class CollisionTimes {
+        + before: TimeInSegment
+        + collided: TimeInSegment
+        + after: TimeInSegment
+    }
+}
+
+' ==================== Train Package ====================
+package Train_P {
+    class Train {
+        - {static} REDUCTION_FACTOR: double
+        - trainId: String
+        - route: Route
+        - departureTime: LocalDateTime
+        - arrival: Arrival
+        - totalWeight: double
+        - totaLength: double
+        - totaPower: double
+        - maxSpeed: double
+        - locomotives: List<Locomotive>
+        
+        + setTotalWeight(): double
+        + setTotalLength(): double
+        + setTotalPower(): double
+        + lowestWagonMaxSpeed(): double
+        + setMaxSpeed(): double
+        + addLocomotive(Locomotive): void
+        + manualDepartTrain(): void
+        + getTotalPower(): double
+        + getTotalWeight(): double
+        + getTotalLenght(): double
+        + requiresElectrification(): boolean
+        + calculateArrivalTime(LocalDateTime): LocalDateTime
+        + getManyBoxesInTrain(): int
+    }
+
+    class Locomotive {
+        - number: String
+        - serviceYear: int
+        - numberBogies: int
+        - operator: String
+        - model: LocomotiveModel
+        - maxSpeed: double
+        
+        + isElectric(): boolean
+    }
+
+    class LocomotiveModel {
+        # power: double
+        # length: double
+        # width: double
+        # height: double
+        # weight: double
+        # maxSpeed: double
+        # make: String
+        # name: String
+        # type: LocomotiveType
+    }
+
+    class DieselLocomotiveModel {
+        - fuelCapacity: double
+    }
+
+    class EletricLocomotiveModel {
+        - voltage: double
+        - frequency: double
+    }
+
+    enum LocomotiveType {
+        ELECTRIC
+        DIESEL
+        
+        {static} + fromString(String): LocomotiveType
+    }
+
+    class Freight {
+        - wagons: List<Wagon>
+        - startFacility: Facility
+        - endFacility: Facility
+        
+        + addWagons(Wagon): void
+    }
+
+    class Wagon {
+        - wagonId: String
+        - wagonModel: WagonModel
+        - boxes: PriorityQueue<Box>
+        
+        + getTotalWeight(): double
+        + size(): int
+        + getUnloadBox(): Box
+        + addBox(Box): void
+        + listWagonBoxes(): String
+    }
+
+    class WagonModel {
+        - id: String
+        - length: double
+        - height: double
+        - width: double
+        - weight: double
+        - maxSpeed: double
+        - gauge: String
+        - boxCapacity: int
+    }
+}
+
+' ==================== Relationships ====================
+
+' Facility relationships
+Facility <|-- FreightYard
+Facility <|-- Station
+Facility <|-- Terminal
+Facility "1" o-- "0..*" RailLine : connections
+Facility "1" *-- "1" GeographicalLocation
+Facility "1" *-- "1" Country
+Facility "1" *-- "1" TimeZone
+Facility "1" *-- "1" TimeZoneGroup
+Facility "1" o-- "0..*" Train : trainInFacilityByTime
+
+' FreightYard relationships
+FreightYard "1" o-- "0..*" Wagon
+FreightYard "1" o-- "0..*" Freight
+
+' Terminal relationships
+Terminal "1" o-- "0..*" Order
+Terminal "1" o-- "0..*" Warehouse
+Terminal "1" o-- "0..*" PickupPlan
+Terminal "1" o-- "0..*" Box : itemHash
+
+' Warehouse relationships
+Warehouse "1" *-- "1" Quarantine
+Warehouse "1" o-- "0..*" Aisle
+Aisle "1" o-- "0..*" Bay
+Bay "1" o-- "0..*" Box
+Quarantine "1" o-- "0..*" QuarantineItem
+
+' PickupPlan relationships
+PickupPlan "1" o-- "0..*" Trolley
+PickupPlan "1" *-- "1" Heuristic
+Trolley "1" o-- "0..*" Allocation
+PickingPath "1" o-- "0..*" WarehousePosition
+
+' Allocation relationships
+Allocation "1" *-- "1" WarehousePosition
+
+' Item relationships
+Box "1" *-- "1" Item
+Box "1" *-- "1" WarehousePosition
+Item "1" *-- "1" Unit
+Item "1" *-- "1" ItemType
+QuarantineItem "1" *-- "1" Item
+QuarantineItem "1" *-- "1" Reason
+
+' Order relationships
+Order "1" o-- "0..*" OrderLine
+Order "1" *-- "1" OrderStatus
+OrderLine "1" o-- "0..*" Allocation
+OrderLine "1" *-- "1" Item
+OrderLine "1" *-- "1" OrderStatus
+
+' RailLineNetwork relationships
+Path "1" o-- "2..*" Facility : railFacilities
+RailLine "1" *-- "1" Facility : startFacility
+RailLine "1" *-- "1" Facility : endFacility
+RailLine "1" o-- "1..*" RailSegment
+Route "1" *-- "1" Path
+Route "1" o-- "0..*" Freight
+RailSegment "1" o-- "0..*" Train : arrivalsAtSegment
+TimeInSegment ..> CollisionTimes : creates
+
+' Train relationships
+Train "1" *-- "1" Route
+Train "1" *-- "1" Arrival
+Train "1" o-- "1..*" Locomotive
+Locomotive "1" *-- "1" LocomotiveModel
+LocomotiveModel <|-- DieselLocomotiveModel
+LocomotiveModel <|-- EletricLocomotiveModel
+LocomotiveModel "1" *-- "1" LocomotiveType
+Freight "1" o-- "0..*" Wagon
+Freight "1" *-- "1" Facility : startFacility
+Freight "1" *-- "1" Facility : endFacility
+Wagon "1" *-- "1" WagonModel
+Wagon "1" o-- "0..*" Box
+
+' Arrival relationships
+Arrival "1" o-- "0..*" Facility : arrival
+Arrival "1" *-- "1" Train
+
+@enduml

@@ -1,0 +1,96 @@
+
+
+@startuml
+title USEI004 - Pick Path Sequencing
+
+
+class PickingPathUI {
+    - controller : PickingPathController
+    + createPaths() : void
+    + listAvailablePlans() : void
+}
+
+class PickingPathController {
+    - terminal : Terminal
+    + listAvailablePlans() : String[]
+    + generatePickPath(whichPlan : int) : void
+}
+
+class TerminalRepository {
+    - instance : TerminalRepository
+    - terminals : List<Terminal>
+    + getInstance() : TerminalRepository
+    + getTerminal() : Terminal
+}
+
+
+
+class Terminal {
+    - plans : List<Plan>
+    + listPlans() : String[]
+    + getPlanByIndex(index : int) : Plan
+    + getPaths(plan : Plan) : Map<Trolley, List<Path>>
+    - buildPositionsWithSeparators(t : Trolley, wId : String) : ArrayList<Position>
+    - calculatePaths(p : ArrayList<Position>, wId : String) : Path[]
+    - processPathA(p : ArrayList<Position>) : int
+    - processPathB(p : ArrayList<Position>) : int
+    - mergePositions(p : ArrayList<Position>) : ArrayList<Position>
+    - distance(o1 : Position, o2 : Position) : int
+    - ascendingAisle(p : ArrayList<Position>) : int
+    - nearestNeighbour(p : ArrayList<Position>) : int
+}
+
+class Plan {
+    - trolleys : List<Trolley>
+    + getTrolleys() : List<Trolley>
+}
+
+class Trolley {
+    - allocations : List<Allocation>
+    - capacity: double
+    - currentWeight: double
+    - percentageOfUse: double
+    + getAllocations() : List<Allocation>
+    + getCurrentWeight() : double
+    + addAllocation(a : Allocation) : boolean
+}
+
+class Allocation {
+    - warehouseId : String
+    - position : Position
+    - picked : boolean
+    - boxId : String
+    - qty : int
+    - sku : String
+    + getPosition() : Position
+    + getWarehouseId() : String
+    + getWeighted() : double
+}
+
+class Position {
+    - bayIndex : int
+    - aisleIndex : int
+    + getBayIndex() : int
+    + getAisleIndex() : int
+}
+
+class Path {
+    - paths : Map<List<Position>, Integer>
+    - warehouseId : String
+    + Path(positions : List<Position>, distance : Integer, warehouseId : String)
+    + getPaths() : Map<List<Position>, Integer>
+    + getWarehouseId() : String
+}
+
+
+PickingPathUI --> PickingPathController : «use»
+PickingPathController --> TerminalRepository : «use»
+PickingPathController --> Terminal : «use»
+TerminalRepository "1" o-- "*" Terminal : contains
+Terminal "1" o-- "*" Plan : has
+Plan "1" o-- "*" Trolley : has
+Trolley "1" *-- "*" Allocation : composed of
+Allocation *-- Position : contains
+Terminal --> Path : creates
+Path "1" o-- "*" Position : uses
+@enduml

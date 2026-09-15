@@ -1,0 +1,133 @@
+@startuml
+
+title USEI004 - Pick Path Sequencing
+actor Picker
+participant "PickingPathUI" as UI
+participant "PickingPathController" as Controller
+participant "TerminalRepository" as Repo
+participant "Terminal" as Terminal
+participant "PickPathSequencing" as PPS
+participant "Plan" as Plan
+participant "Trolley" as Trolley
+participant "Allocation" as Allocation
+participant "AscendingAisle" as AA
+participant "NearestNeighbour" as NN
+participant "Path" as Path
+
+Picker -> UI : asks to view paths for a certain plan
+activate Picker
+activate UI
+
+UI -> Controller : listAvailablePlans()
+activate Controller
+Controller -> Repo : getInstance()
+activate Repo
+Repo --> Controller : TerminalRepository
+deactivate Repo
+
+Controller -> Repo : getTerminal()
+activate Repo
+Repo --> Controller : Terminal
+deactivate Repo
+
+Controller -> Terminal : listPlans()
+activate Terminal
+Terminal --> Controller : String[] plans
+deactivate Terminal
+
+Controller --> UI : plans
+deactivate Controller
+
+UI -> Picker : Display available plans
+Picker -> UI : Select plan index
+
+UI -> Controller : generatePickPath(whichPlan)
+activate Controller
+
+Controller -> Terminal : getPlanByIndex(whichPlan)
+activate Terminal
+Terminal --> Controller : plan
+deactivate Terminal
+
+Controller -> PPS : getPaths(plan)
+activate PPS
+
+PPS -> Plan : getTrolleys()
+activate Plan
+Plan --> PPS : List<Trolley>
+deactivate Plan
+
+loop For each Trolley
+    PPS -> PPS : buildPositions(trolley, warehouseId)
+    activate PPS
+
+    PPS -> Trolley : getAllocations()
+    activate Trolley
+    Trolley --> PPS : List<Allocation>
+    deactivate Trolley
+
+    loop For each Allocation
+        PPS -> Allocation : getPosition()
+        activate Allocation
+        Allocation --> PPS : Position
+        deactivate Allocation
+    end
+
+    PPS -> PPS : positions
+    deactivate PPS
+    PPS -> PPS : calculatePaths(positions, warehouseId)
+    activate PPS
+
+        PPS -> AA : processPathA(positions)
+        activate AA
+            AA --> PPS : mergePositions(positions)
+            activate PPS
+                PPS --> AA : positionsA
+            deactivate PPS
+            AA --> AA : ascendingAisle(positions)
+            activate AA
+                AA --> AA : totalDistance
+            deactivate AA
+            AA --> PPS : totalDistanceA
+        deactivate AA
+
+        |||
+
+        PPS -> NN : processPathB(positions)
+        activate NN
+            NN --> PPS : mergePositions(positions)
+            activate PPS
+                PPS --> NN : positionsB
+            deactivate PPS
+            NN --> NN : nearestNeighbour(positions)
+            activate NN
+                NN --> NN : totalDistance
+            deactivate NN
+            NN --> PPS : totalDistanceB
+        deactivate NN
+
+        PPS -> Path : new Path(positionsA, totalDistanceA, warehouseId)
+        activate Path
+            Path --> PPS : pathA
+        deactivate Path
+
+        PPS -> Path : new Path(positionsB, totalDistanceB, warehouseId)
+        activate Path
+            Path --> PPS : pathB
+        deactivate Path
+
+        PPS --> PPS : new Path[] {pathA, pathB}
+
+    deactivate PPS
+end
+
+PPS --> Controller : Map<Trolley, List<Path>> generatedPaths
+deactivate PPS
+
+Controller --> UI : Paths generated successfully
+deactivate Controller
+
+UI --> Picker : Display "Picking path generated"
+deactivate UI
+deactivate Picker
+@enduml

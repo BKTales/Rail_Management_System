@@ -1,0 +1,127 @@
+@startuml
+title USEI003 - Order Plan Pick
+
+class OrderPlanPickUI {
+    - terminalIndex : int
+    - orderMode : int
+    - capacity : double
+
+    + listAvailableTerminals() : void
+    + listPickModes() : void
+    + readTrolleyCapacity() : void
+    + getOrder() : void
+    + createPlan() : void
+}
+
+class OrderPlanPickController {
+    - terminalRepo : TerminalRepository
+    - terminal : Terminal
+    - order : Order
+
+    + listAvailableTerminals() : String[]
+    + getOrder(terminalIndex : int) : void
+    + listPickModes() : String[]
+    + createPlan(mode : int, capacity : double) : String
+}
+
+class TerminalRepository {
+    - terminals : List<Terminal>
+    + getInstance() : TerminalRepository
+    + getTerminal(index : int) : Terminal
+    + listTerminals() : String[]
+}
+
+class Item {
+    - sku : String
+    - unitWeight : double
+    + getSku() : String
+    + getUnitWeight() : double
+}
+
+class Terminal {
+    - warehouses : List<Warehouse>
+    - orders : List<Order>
+    - plans : List<Plan>
+
+    + getOrderToPlan() : Order
+    + getPlan(order : Order, indexMode : int, capacity : double) : Plan
+    + listPickModes() : String[]
+}
+
+class Warehouse {
+}
+
+class Order {
+    - id : String
+    - dueDate : LocalDateTime
+    - priority : int
+    - orderLines : List<OrderLine>
+    - status : OrderStatus
+
+    + getItems() : List<OrderLine>
+}
+
+class OrderLine {
+    - item : Item
+    - requestedQty : int
+    - allocatedQty : int
+    - status : OrderStatus
+    - allocations : List<Allocation>
+
+    + getItem() : Item
+    + getRequestedQty() : int
+    + getAllocations() : List<Allocation>
+    + addAllocation(warehouseId : String, position : Position, boxId : String, qty : int) : void
+}
+
+class Allocation {
+    - warehouseId : String
+    - aisleIndex : int
+    - bayIndex : int
+    - boxId : String
+    - qty : int
+    - sku : String
+
+    + getSku() : String
+    + getQty() : int
+}
+
+class Trolley {
+    - capacity : double
+    - currentWeight : double
+    - allocations : List<Allocation>
+
+    + addAllocation(allocation : Allocation) : boolean
+    + getCurrentWeight() : double
+    + getAllocations() : List<Allocation>
+}
+
+class Plan {
+    - planID : String
+    - heuristic : Heuristic
+    - trolleys : List<Trolley>
+    - totalWeight : double
+
+    + addTrolley(trolley : Trolley)
+    + getLastTrolley() : Trolley
+    + getTrolleys() : List<Trolley>
+}
+
+Terminal "1" *-- "1..*" Warehouse
+Terminal "1" --> "1..*" Plan : assembles
+Terminal "1" --> "1..*" Order : contains
+
+Order "1" --> "1..*" OrderLine : contains
+OrderLine "1" --> "1" Item : contains
+OrderLine "1" *-- "0..*" Allocation
+
+
+TerminalRepository "Contains" --> Terminal
+OrderPlanPickUI "Interacts" --> OrderPlanPickController
+OrderPlanPickController "Uses" --> TerminalRepository
+OrderPlanPickController --> Terminal
+
+Plan "1" *-- "1..*" Trolley
+Trolley "1" *-- "0..*" Allocation
+
+@enduml

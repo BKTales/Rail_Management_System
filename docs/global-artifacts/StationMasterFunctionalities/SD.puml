@@ -1,0 +1,24 @@
+@startuml
+actor StationManager
+
+activate StationManager
+
+loop until input == "exit"
+StationManager -> System : Login
+    activate System
+    alt
+
+        System -> System : Option1 - access the Cargo Handling functionality ?????
+
+    end
+
+    System -> StationManager : Display menu of options
+    deactivate System
+StationManager -> System : Select one option
+    activate System
+    System -> System : Execute wanted action
+    System -> StationManager : Return/Display result
+    deactivate System
+
+end
+@enduml

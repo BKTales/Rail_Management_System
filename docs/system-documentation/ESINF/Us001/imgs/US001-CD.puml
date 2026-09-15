@@ -1,0 +1,146 @@
+@startuml
+title US001-CD
+
+class Item {
+    - sku : String
+    - itemType : ItemType
+    - unit : Unit
+    - volume : double
+    - unitWeight : double
+    - expiryDate
+}
+
+enum ItemType{
+    CLEANING
+    ELECTRONICS
+    HARDWARE
+    BEVERAGE
+    PERSONAL_CARE
+    GROCERY
+}
+
+
+enum Unit {
+    PACK
+    BOTTLE
+    BAG
+    UNIT
+}
+
+Item --> ItemType : has a
+Item --> Unit : has a
+
+/' --------- Terminal  ---------  '/
+
+class Terminal{
+    - warehouses : LinkedList < Warehouse >
+}
+
+class Warehouse{
+    - quarantine : Quarantine
+    - aisle : List < Aisle >
+    - id : int
+
+}
+
+Terminal "1" *-- "many" Warehouse
+
+
+class Aisle{
+    - size : int
+    - bay : List < Bay >
+}
+
+class Bay {
+    - size : int
+    - boxes : PriorityQueue < Box >
+    - MAX_BOXES : int = 10
+
+    + getBox()
+    + addBox()
+}
+
+
+class Box {
+	- boxID : String
+	- product : Item
+	- qntY : int /' don't know if it is going to stay! '/
+	- expireDate : date
+	- receivedAt : timestamp
+
+	+ changeReceiveAt(time : timestamp)
+}
+
+Warehouse "1" *-- "many" Aisle : contains
+
+Aisle "1" *-- "many" Bay : contains
+
+Box "1" *-- "many" Item : stores
+
+Bay "1" --> "many" Box : stores
+
+/' --------- Wagon ---------  '/
+
+class Wagon{
+    - wagonId : int
+    - boxes : PriorityQueue < Box >    /'- boxId : int'/
+    - qty : int
+}
+
+Wagon --> Terminal : gets to
+
+
+
+class WagonsUnloadingController {
+    - terminalRepo : TerminalRepository
+    - freightYard : FreightYard
+
+    + WagonsUnloadingController()
+    + listWagonsSize() : int
+    + getWagonsList() : List<String>
+    + unloadSelectedWagons(terminalIndex : int, selectedWagons : List<Boolean>) : List<String>
+}
+
+WagonsUnloadingController ..> TerminalRepository : stores at
+WagonsUnloadingController ..> FreightYard
+WagonsUnloadingController ..> Terminal
+
+
+class WagonsUnloadingUI {
+    - controller : WagonsUnloadingController
+    - terminalIndex : int
+    - selectedWagons : List<Boolean>
+    - availableWagonsList : List<String>
+    - currentSelection : int
+
+    + WagonsUnloadingUI()
+    + run() : void
+    + interactiveWagonSelection() : void
+    - displayWagonMenu() : void
+    - getSelectedCount() : int
+    - areAllWagonsSelected() : boolean
+    - processSelectedWagons() : void
+}
+
+
+
+WagonsUnloadingUI ..> WagonsUnloadingController
+
+TerminalRepository ..> Terminal : gets
+FreightYard --* Wagon
+
+class TerminalRepository {
+    - instance : TerminalRepository
+    - terminals : ArrayList<Terminal>
+
+    + getInstance() : TerminalRepository
+    - TerminalRepository()
+    + add(terminal : Terminal) : void
+    + remove(terminal : Terminal) : void
+    + getTerminal(index : int) : Terminal
+    + listTerminals() : String[]
+    + size() : int
+    + toString() : String
+}
+
+@enduml

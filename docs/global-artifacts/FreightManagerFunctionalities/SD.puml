@@ -1,0 +1,32 @@
+@startuml
+actor FreightManager
+
+activate FreightManager
+
+loop until input == "exit"
+
+FreightManager -> System : Login
+    activate System
+    alt
+    System -> System : Option1 - Display existing paths (Can display a specific path with more detail)
+    System -> System : Option2 - Display existing Routes (Can display a specific route with more detail)
+    System -> System : Option3 - Display existing Freights  (Can display a specific freight with more detail)
+    System -> System : Option4 - Create Path
+    System -> System : Option5 - Create Route
+    System -> System : Option6 - Create Freight
+    System -> System : Option7 - Assign Freight to a Route
+    System -> System : Option8 - Assign Path to a Route
+
+    end
+
+    System -> FreightManager : Display menu of options
+    deactivate System
+FreightManager -> System : Select one option
+    activate System
+    System -> System : Execute wanted action
+    System -> FreightManager : Return/Display result
+    deactivate System
+
+end
+
+@enduml
